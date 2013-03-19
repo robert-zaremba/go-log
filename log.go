@@ -36,8 +36,8 @@ var Levels = struct {
 var levelStrings = map[Level]string{
 	Levels.Trace:   "TRACE",
 	Levels.Debug:   "DEBUG",
-	Levels.Info:    "INFO",
-	Levels.Warning: "WARN",
+	Levels.Info:    "INFO ",
+	Levels.Warning: "WARN ",
 	Levels.Error:   "ERROR",
 	Levels.Fatal:   "FATAL",
 }
