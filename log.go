@@ -95,6 +95,8 @@ type Logger struct {
 	outputs []output
 }
 
+var vv map[io.Writer]sync.Mutex
+
 // Instantiate a new Logger
 func New() *Logger {
 	return &Logger{sync.Mutex{}, make([]output, 0)}
@@ -178,11 +180,13 @@ func (this *Logger) AddOutput(writer io.Writer, level Level, fm Formatter) {
 // Logs a message for the given level. Most callers will likely
 // prefer to use one of the provided convenience functions (Debug, Info...).
 func (this *Logger) Log(level Level, msg string) {
-	this.mtx.Lock()
-	defer this.mtx.Unlock()
+	var out []byte
 	for _, output := range this.outputs {
 		if output.level <= level {
-			output.writer.Write(output.fmt.Format(level, msg))
+			out = output.fmt.Format(level, msg)
+			this.mtx.Lock()
+			output.writer.Write(out)
+			this.mtx.Unlock()
 		}
 	}
 }
