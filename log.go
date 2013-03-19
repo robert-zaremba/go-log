@@ -168,7 +168,7 @@ func (this *Logger) Log(level Level, msg string) {
 	defer this.mtx.Unlock()
 	for _, output := range this.outputs {
 		if output.level <= level {
-			output.writer.Write(output.fmt.Format(output.level, msg))
+			output.writer.Write(output.fmt.Format(level, msg))
 		}
 	}
 }
