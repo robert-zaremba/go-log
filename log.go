@@ -14,6 +14,7 @@ import (
 	"log"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -97,25 +98,25 @@ type StdFormatter struct {
 }
 
 func (this StdFormatter) Format(level Level, msg string) []byte {
-	var sfile, slevel string
+	var slevel string
 	var ok bool
+	var out []string
 
-	if this.Flag&(log.Lshortfile|log.Llongfile) != 0 {
-		// getting caller info is expensive.
-		if _, file, line, ok := runtime.Caller(2); !ok { // 2: calldepth
-			sfile = "???"
-		} else {
-			if this.Flag&log.Lshortfile != 0 {
-				for i := len(file) - 1; i > 0; i-- {
-					if file[i] == '/' {
-						file = file[i+1:]
-						break
-					}
-				}
-			}
-			sfile = fmt.Sprintf("%s:%d", file, line)
+	// adding time info
+	if this.Flag&(log.Ldate|log.Ltime|log.Lmicroseconds) != 0 {
+		now := time.Now()
+		if this.Flag&log.Ldate != 0 {
+			out = append(out, fmt.Sprintf("%v-%02d-%02d", now.Year(), now.Month(), now.Day()))
 		}
+		if this.Flag&(log.Lmicroseconds) != 0 {
+			out = append(out, fmt.Sprintf("%02d:%02d:%02d.%06d", now.Hour(), now.Minute(), now.Second(), now.Nanosecond()/1000000))
+		} else if this.Flag&(log.Ltime) != 0 {
+			out = append(out, fmt.Sprintf("%02d:%02d:%02d", now.Hour(), now.Minute(), now.Second()))
+		}
+
 	}
+
+	// adding level info
 	if this.Colored {
 		slevel, ok = levelCStrings[level]
 	} else {
@@ -124,7 +125,29 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 	if !ok {
 		slevel = strconv.Itoa(int(level))
 	}
-	return []byte(fmt.Sprintf("%s %s%s %s", slevel, this.Prefix, sfile, msg))
+	out = append(out, slevel)
+
+	out = append(out, this.Prefix)
+
+	// adding caller info. It's quiet exepnsive
+	if this.Flag&(log.Lshortfile|log.Llongfile) != 0 {
+		if _, file, line, ok := runtime.Caller(2); ok { // 2: calldepth
+			if this.Flag&log.Lshortfile != 0 {
+				for i := len(file) - 1; i > 0; i-- {
+					if file[i] == '/' {
+						file = file[i+1:]
+						break
+					}
+				}
+			}
+			out = append(out, fmt.Sprintf("%s:%d", file, line))
+		} else {
+			out = append(out, "???")
+		}
+	}
+
+	out = append(out, msg)
+	return []byte(strings.Join(out, " "))
 }
 
 //
@@ -145,12 +168,6 @@ func (this *Logger) Log(level Level, format string, v ...interface{}) {
 			output.writer.Write(output.fmt.Format(output.level, message))
 		}
 	}
-}
-
-// Gets the timestamp string
-func getTimestamp() string {
-	now := time.Now()
-	return fmt.Sprintf("%v-%02d-%02d %02d:%02d:%02d.%03d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond()/1000000)
 }
 
 // Adds an ouput, specifying the maximum log Level
