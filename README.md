@@ -1,4 +1,4 @@
-logging
-=======
+Log
+===
 
-Lightweight Go logger with elastic formatter and multiple output support.
+Lightweight, alternative Go logger with elastic formatter and multiple output support.

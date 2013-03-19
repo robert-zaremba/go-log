@@ -130,7 +130,6 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 		} else if this.Flag&(Ltime) != 0 {
 			out = append(out, fmt.Sprintf("%02d:%02d:%02d", now.Hour(), now.Minute(), now.Second()))
 		}
-
 	}
 
 	// adding level info
@@ -150,12 +149,7 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 	if this.Flag&(Lshortfile|Llongfile) != 0 {
 		if _, file, line, ok := runtime.Caller(2); ok { // 2: calldepth
 			if this.Flag&Lshortfile != 0 {
-				for i := len(file) - 1; i > 0; i-- {
-					if file[i] == '/' {
-						file = file[i+1:]
-						break
-					}
-				}
+				file = file[strings.LastIndex(file, "/")+1:]
 			}
 			out = append(out, fmt.Sprintf("%s:%d", file, line))
 		} else {
