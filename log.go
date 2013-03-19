@@ -87,6 +87,13 @@ func New() *Logger {
 	return &Logger{sync.Mutex{}, make([]output, 0)}
 }
 
+// Convenience function to create logger with StdFormatter
+func NewStd(w io.Writer, level Level, prefix string, flag int, colored bool) *Logger {
+	l := Logger{sync.Mutex{}, make([]output, 0)}
+	l.AddOutput(w, level, StdFormatter{prefix, flag, colored})
+	return &l
+}
+
 // Standard Formatter
 type StdFormatter struct {
 	Prefix  string // prefix to write at beginning of each line
