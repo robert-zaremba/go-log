@@ -11,6 +11,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"runtime"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -62,9 +65,14 @@ func String2Level(level string) (Level, error) {
 	return Levels.Debug, errors.New("Wrong log level " + level)
 }
 
+type Formatter interface {
+	Format(Level, string) []byte
+}
+
 type output struct {
 	writer io.Writer
 	level  Level
+	fmt    Formatter
 }
 
 // The Logger
@@ -78,63 +86,58 @@ func New() *Logger {
 	return &Logger{sync.Mutex{}, make([]output, 0)}
 }
 
-// Adds an ouput, specifying the maximum log Level
-// you want to be written to this output. For instance,
-// if you pass Warning for level, all logs of type
-// Warning, Error, and Fatal would be logged to this output.
-func (this *Logger) AddOutput(writer io.Writer, level Level) {
-	this.mtx.Lock()
-	this.outputs = append(this.outputs, output{writer, level})
-	this.mtx.Unlock()
+//
+// STANDARD FORMATTERS
+// -------------------
+
+// based on go/log/log.go:Logger
+type StdFormatter struct {
+	Prefix string // prefix to write at beginning of each line
+	Flag   int    // format flags - check log.L* from std log package
 }
 
-// Convenience function
-func (this *Logger) Trace(format string, v ...interface{}) {
-	// TODO: split the string
-	this.Logger(Levels.Trace, format, v...)
+func (this StdFormatter) Format(level Level, msg string) []byte {
+	var sfile, slevel string
+	var ok bool
+
+	if this.Flag&(log.Lshortfile|log.Llongfile) != 0 {
+		// getting caller info is expensive.
+		if _, file, line, ok := runtime.Caller(2); !ok { // 2: calldepth
+			sfile = "???"
+		} else {
+			if this.Flag&log.Lshortfile != 0 {
+				for i := len(file) - 1; i > 0; i-- {
+					if file[i] == '/' {
+						file = file[i+1:]
+						break
+					}
+				}
+			}
+			sfile = fmt.Sprintf("%s:%d", file, line)
+		}
+	}
+	if slevel, ok = levelStrings[level]; !ok {
+		slevel = strconv.Itoa(int(level))
+	}
+	return []byte(fmt.Sprintf("%s %s%s %s", slevel, this.Prefix, sfile, msg))
 }
 
-// Convenience function
-func (this *Logger) Debug(format string, v ...interface{}) {
-	this.Logger(Levels.Debug, format, v...)
-}
-
-// Convenience function
-func (this *Logger) Info(format string, v ...interface{}) {
-	this.Logger(Levels.Info, format, v...)
-}
-
-// Convenience function
-func (this *Logger) Warning(format string, v ...interface{}) {
-	this.Logger(Levels.Warning, format, v...)
-}
-
-// Convenience function
-func (this *Logger) Error(format string, v ...interface{}) {
-	this.Logger(Levels.Error, format, v...)
-}
-
-// Convenience function, will not terminate the program
-func (this *Logger) Fatal(format string, v ...interface{}) {
-	this.Logger(Levels.Fatal, format, v...)
-}
+//
+// LOGGER
+// ------
 
 // Loggers a message for the given level. Most callers will likely
 // prefer to use one of the provided convenience functions.
-func (this *Logger) Logger(level Level, format string, v ...interface{}) {
+func (this *Logger) Log(level Level, format string, v ...interface{}) {
 	message := fmt.Sprintf(format+"\n", v...)
-	strTimestamp := getTimestamp()
-	strFinal := fmt.Sprintf("%s [%-5s] %s", strTimestamp, levelCStrings[level], message)
-	this.log(level, strFinal)
-}
+	// strTimestamp := getTimestamp()
+	// strFinal := fmt.Sprintf("%s [%-5s] %s", strTimestamp, levelCStrings[level], message)
 
-func (this *Logger) log(level Level, m string) {
-	bytes := []byte(m)
 	this.mtx.Lock()
 	defer this.mtx.Unlock()
 	for _, output := range this.outputs {
 		if output.level <= level {
-			output.writer.Write(bytes)
+			output.writer.Write(output.fmt.Format(output.level, message))
 		}
 	}
 }
@@ -143,4 +146,45 @@ func (this *Logger) log(level Level, m string) {
 func getTimestamp() string {
 	now := time.Now()
 	return fmt.Sprintf("%v-%02d-%02d %02d:%02d:%02d.%03d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond()/1000000)
+}
+
+// Adds an ouput, specifying the maximum log Level
+// you want to be written to this output. For instance,
+// if you pass Warning for level, all logs of type
+// Warning, Error, and Fatal would be logged to this output.
+func (this *Logger) AddOutput(writer io.Writer, level Level, fm Formatter) {
+	this.mtx.Lock()
+	this.outputs = append(this.outputs, output{writer, level, fm})
+	this.mtx.Unlock()
+}
+
+// Convenience function
+func (this *Logger) Trace(format string, v ...interface{}) {
+	// TODO: split the string
+	this.Log(Levels.Trace, format, v...)
+}
+
+// Convenience function
+func (this *Logger) Debug(format string, v ...interface{}) {
+	this.Log(Levels.Debug, format, v...)
+}
+
+// Convenience function
+func (this *Logger) Info(format string, v ...interface{}) {
+	this.Log(Levels.Info, format, v...)
+}
+
+// Convenience function
+func (this *Logger) Warning(format string, v ...interface{}) {
+	this.Log(Levels.Warning, format, v...)
+}
+
+// Convenience function
+func (this *Logger) Error(format string, v ...interface{}) {
+	this.Log(Levels.Error, format, v...)
+}
+
+// Convenience function, will not terminate the program
+func (this *Logger) Fatal(format string, v ...interface{}) {
+	this.Log(Levels.Fatal, format, v...)
 }
