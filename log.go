@@ -90,10 +90,10 @@ func New() *Logger {
 // STANDARD FORMATTERS
 // -------------------
 
-// based on go/log/log.go:Logger
 type StdFormatter struct {
-	Prefix string // prefix to write at beginning of each line
-	Flag   int    // format flags - check log.L* from std log package
+	Prefix  string // prefix to write at beginning of each line
+	Flag    int    // format flags - based flags from std log package
+	Colored bool   // use colored level names
 }
 
 func (this StdFormatter) Format(level Level, msg string) []byte {
@@ -116,7 +116,12 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 			sfile = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
-	if slevel, ok = levelStrings[level]; !ok {
+	if this.Colored {
+		slevel, ok = levelCStrings[level]
+	} else {
+		slevel, ok = levelStrings[level]
+	}
+	if !ok {
 		slevel = strconv.Itoa(int(level))
 	}
 	return []byte(fmt.Sprintf("%s %s%s %s", slevel, this.Prefix, sfile, msg))
