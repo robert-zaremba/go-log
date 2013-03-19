@@ -62,14 +62,9 @@ func String2Level(level string) (Level, error) {
 	return Levels.Debug, errors.New("Wrong log level " + level)
 }
 
-type Formatter interface {
-	Format(string) string
-}
-
 type output struct {
 	writer io.Writer
 	level  Level
-	fmt    Formatter
 }
 
 // The Logger
@@ -87,9 +82,9 @@ func New() *Logger {
 // you want to be written to this output. For instance,
 // if you pass Warning for level, all logs of type
 // Warning, Error, and Fatal would be logged to this output.
-func (this *Logger) AddOutput(writer io.Writer, level Level, fmt Formatter) {
+func (this *Logger) AddOutput(writer io.Writer, level Level) {
 	this.mtx.Lock()
-	this.outputs = append(this.outputs, output{writer, level, fmt})
+	this.outputs = append(this.outputs, output{writer, level})
 	this.mtx.Unlock()
 }
 
