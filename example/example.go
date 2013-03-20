@@ -8,9 +8,8 @@ import (
 var Log = log.New()
 
 func main() {
-	//Log.AddOutput(os.Stdout, clog.LevelWarning)
-	Log.AddOutput(os.Stderr, log.Levels.Info, log.StdFormatter{"[root]", log.Lshortfile, false})
-	Log.AddOutput(os.Stderr, log.Levels.Info, log.StdFormatter{"[with time]", log.Lshortfile | log.Ldate | log.Ltime, false})
+	Log.AddHandler(os.Stderr, log.Levels.Info, log.StdFormatter{"[root]", log.Lshortfile, false})
+	Log.AddHandler(os.Stderr, log.Levels.Info, log.StdFormatter{"[with time]", log.Lshortfile | log.Ldate | log.Ltime, false})
 	x := 1.23
 	Log.Error("x is %v", x)
 	Log.Debug("This won't be printed")

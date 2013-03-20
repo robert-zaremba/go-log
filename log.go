@@ -1,6 +1,6 @@
 /* This implements an alternative logger to the one found in the standard
- * library with support for more logging levels, formatters and outputs.
- * The main goal is to provide easy and flexible way to handle new outputs and formats
+ * library with support for more logging levels, formatters and handlers.
+ * The main goal is to provide easy and flexible way to handle new handlers and formats
  * Author: Robert Zaremba
  *
  * https://github.com/scale-it/go-log
@@ -84,28 +84,28 @@ type Formatter interface {
 	Format(Level, string) []byte
 }
 
-type output struct {
+type handler struct {
 	writer io.Writer
 	level  Level
 	fmt    Formatter
 }
 
 type Logger struct {
-	mtx     sync.Mutex
-	outputs []output
+	mtx      sync.Mutex
+	handlers []handler
 }
 
 var vv map[io.Writer]sync.Mutex
 
 // Instantiate a new Logger
 func New() *Logger {
-	return &Logger{sync.Mutex{}, make([]output, 0)}
+	return &Logger{sync.Mutex{}, make([]handler, 0)}
 }
 
 // Convenience function to create logger with StdFormatter
 func NewStd(w io.Writer, level Level, prefix string, flag int, colored bool) *Logger {
-	l := Logger{sync.Mutex{}, make([]output, 0)}
-	l.AddOutput(w, level, StdFormatter{prefix, flag, colored})
+	l := Logger{sync.Mutex{}, make([]handler, 0)}
+	l.AddHandler(w, level, StdFormatter{prefix, flag, colored})
 	return &l
 }
 
@@ -167,13 +167,13 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
  * ------
  */
 
-// Adds an ouput, specifying the maximum log Level
+// Adds a handler, specifying the maximum log Level
 // you want to be written to this output. For instance,
 // if you pass Warning for level, all logs of type
-// Warning, Error, and Fatal would be logged to this output.
-func (this *Logger) AddOutput(writer io.Writer, level Level, fm Formatter) {
+// Warning, Error, and Fatal would be logged to this handler.
+func (this *Logger) AddHandler(writer io.Writer, level Level, fm Formatter) {
 	this.mtx.Lock()
-	this.outputs = append(this.outputs, output{writer, level, fm})
+	this.handlers = append(this.handlers, handler{writer, level, fm})
 	this.mtx.Unlock()
 }
 
@@ -181,11 +181,11 @@ func (this *Logger) AddOutput(writer io.Writer, level Level, fm Formatter) {
 // prefer to use one of the provided convenience functions (Debug, Info...).
 func (this *Logger) Log(level Level, msg string) {
 	var out []byte
-	for _, output := range this.outputs {
-		if output.level <= level {
-			out = output.fmt.Format(level, msg)
+	for _, h := range this.handlers {
+		if h.level <= level {
+			out = h.fmt.Format(level, msg)
 			this.mtx.Lock()
-			output.writer.Write(out)
+			h.writer.Write(out)
 			this.mtx.Unlock()
 		}
 	}
