@@ -103,9 +103,9 @@ func New() *Logger {
 }
 
 // Convenience function to create logger with StdFormatter
-func NewStd(w io.Writer, level Level, prefix string, flag int, colored bool) *Logger {
+func NewStd(w io.Writer, level Level, flag int, colored bool) *Logger {
 	l := Logger{sync.Mutex{}, make([]handler, 0)}
-	l.AddHandler(w, level, StdFormatter{prefix, flag, colored})
+	l.AddHandler(w, level, StdFormatter{"", flag, colored})
 	return &l
 }
 
