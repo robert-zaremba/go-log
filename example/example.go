@@ -14,7 +14,7 @@ func main() {
 	Log.Error("x is %v", x)
 	Log.Debug("This won't be printed")
 
-	Log = log.NewStd(os.Stderr, log.Levels.Debug, "", log.Ldate|log.Lmicroseconds, true)
+	Log = log.NewStd(os.Stderr, log.Levels.Debug, log.Ldate|log.Lmicroseconds, true)
 	Log.Debug("some message")
 	Log.Info("some message")
 	Log.Warning("some message")
