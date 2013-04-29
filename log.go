@@ -165,3 +165,10 @@ func (this *Logger) Error(format string, v ...interface{}) {
 func (this *Logger) Fatal(format string, v ...interface{}) {
 	this.Log(Levels.Fatal, fmt.Sprintf(format+"\n", v...))
 }
+
+// Convinience function to support io.Writer interface
+func (this *Logger) Write(p []byte) (n int, err error) {
+	n = len(p)
+	this.Log(0, string(p))
+	return
+}
