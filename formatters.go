@@ -64,3 +64,17 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 	out = append(out, msg)
 	return []byte(strings.Join(out, " "))
 }
+
+type TimeFormatter struct {
+	Prefix string // prefix to write at beginning of each line
+}
+
+func (this TimeFormatter) Format(level Level, msg string) []byte {
+	var out []string
+
+	now := time.Now().UTC()
+	out = append(out, fmt.Sprintf("%v-%02d-%02d %02d:%02d:%02d.%06d UTC", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond()/1000000))
+	out = append(out, this.Prefix)
+	out = append(out, msg)
+	return []byte(strings.Join(out, " "))
+}
