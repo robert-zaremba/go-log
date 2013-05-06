@@ -11,7 +11,8 @@ func main() {
 	Log.AddHandler(os.Stderr, log.Levels.Info, log.StdFormatter{"[root]", log.Lshortfile, false})
 	Log.AddHandler(os.Stderr, log.Levels.Info, log.StdFormatter{"[with time]", log.Lshortfile | log.Ldate | log.Ltime, false})
 	x := 1.23
-	Log.Error("x is %v", x)
+	Log.Info("x is", x)
+	Log.Infof("x is %f and is positive: %v", x, x > 0)
 	Log.Debug("This won't be printed")
 
 	Log = log.NewStd(os.Stderr, log.Levels.Debug, log.Ldate|log.Lmicroseconds, true)
@@ -20,5 +21,5 @@ func main() {
 	Log.Info("some message")
 	Log.Warning("some message")
 	Log.Error("some message")
-	Log.Fatal("some message")
+	Log.Critical("some message")
 }

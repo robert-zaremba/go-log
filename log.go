@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 )
 
@@ -34,32 +35,32 @@ const (
 type Level uint8
 
 var Levels = struct {
-	Trace   Level
-	Debug   Level
-	Info    Level
-	Warning Level
-	Error   Level
-	Fatal   Level
+	Trace    Level
+	Debug    Level
+	Info     Level
+	Warning  Level
+	Error    Level
+	Critical Level
 }{0, 10, 20, 30, 40, 50}
 
 // Verbose names of the levels
 var levelStrings = map[Level]string{
-	Levels.Trace:   "TRACE",
-	Levels.Debug:   "DEBUG",
-	Levels.Info:    "INFO ",
-	Levels.Warning: "WARN ",
-	Levels.Error:   "ERROR",
-	Levels.Fatal:   "FATAL",
+	Levels.Trace:    "TRACE",
+	Levels.Debug:    "DEBUG",
+	Levels.Info:     "INFO ",
+	Levels.Warning:  "WARN ",
+	Levels.Error:    "ERROR",
+	Levels.Critical: "CRITIC",
 }
 
 // Verbose and colored names of the levels
 var levelCStrings = map[Level]string{
-	Levels.Trace:   levelStrings[Levels.Trace],
-	Levels.Debug:   levelStrings[Levels.Debug],
-	Levels.Info:    AnsiEscape(MAGENTA, levelStrings[Levels.Info], OFF),
-	Levels.Warning: AnsiEscape(YELLOW, levelStrings[Levels.Warning], OFF),
-	Levels.Error:   AnsiEscape(RED, levelStrings[Levels.Error], OFF),
-	Levels.Fatal:   AnsiEscape(RED, BOLD, levelStrings[Levels.Fatal], OFF),
+	Levels.Trace:    levelStrings[Levels.Trace],
+	Levels.Debug:    levelStrings[Levels.Debug],
+	Levels.Info:     AnsiEscape(MAGENTA, levelStrings[Levels.Info], OFF),
+	Levels.Warning:  AnsiEscape(YELLOW, levelStrings[Levels.Warning], OFF),
+	Levels.Error:    AnsiEscape(RED, levelStrings[Levels.Error], OFF),
+	Levels.Critical: AnsiEscape(RED, BOLD, levelStrings[Levels.Critical], OFF),
 }
 
 // Returns an log Level which name match given string.
@@ -108,7 +109,7 @@ func NewStd(w io.Writer, level Level, flag int, colored bool) *Logger {
 // Adds a handler, specifying the maximum log Level
 // you want to be written to this output. For instance,
 // if you pass Warning for level, all logs of type
-// Warning, Error, and Fatal would be logged to this handler.
+// Warning, Error, and Critical would be logged to this handler.
 func (this *Logger) AddHandler(writer io.Writer, level Level, fm Formatter) {
 	this.mtx.Lock()
 	this.handlers = append(this.handlers, handler{writer, level, fm})
@@ -136,34 +137,77 @@ func (this *Logger) Logf(level Level, format string, v ...interface{}) {
 }
 
 // Convenience function
-func (this *Logger) Trace(format string, v ...interface{}) {
+func (this *Logger) Trace(v ...interface{}) {
+	// TODO: split the string
+	this.Log(Levels.Trace, fmt.Sprintln(v...))
+}
+
+// Convenience function
+func (this *Logger) Tracef(format string, v ...interface{}) {
 	// TODO: split the string
 	this.Log(Levels.Trace, fmt.Sprintf(format+"\n", v...))
 }
 
 // Convenience function
-func (this *Logger) Debug(format string, v ...interface{}) {
+func (this *Logger) Debug(v ...interface{}) {
+	this.Log(Levels.Debug, fmt.Sprintln(v...))
+}
+
+// Convenience function
+func (this *Logger) Debugf(format string, v ...interface{}) {
 	this.Log(Levels.Debug, fmt.Sprintf(format+"\n", v...))
 }
 
 // Convenience function
-func (this *Logger) Info(format string, v ...interface{}) {
+func (this *Logger) Info(v ...interface{}) {
+	this.Log(Levels.Info, fmt.Sprintln(v...))
+}
+
+// Convenience function
+func (this *Logger) Infof(format string, v ...interface{}) {
 	this.Log(Levels.Info, fmt.Sprintf(format+"\n", v...))
 }
 
 // Convenience function
-func (this *Logger) Warning(format string, v ...interface{}) {
+func (this *Logger) Warning(v ...interface{}) {
+	this.Log(Levels.Warning, fmt.Sprintln(v...))
+}
+
+// Convenience function
+func (this *Logger) Warningf(format string, v ...interface{}) {
 	this.Log(Levels.Warning, fmt.Sprintf(format+"\n", v...))
 }
 
 // Convenience function
-func (this *Logger) Error(format string, v ...interface{}) {
+func (this *Logger) Error(v ...interface{}) {
+	this.Log(Levels.Error, fmt.Sprintln(v...))
+}
+
+// Convenience function
+func (this *Logger) Errorf(format string, v ...interface{}) {
 	this.Log(Levels.Error, fmt.Sprintf(format+"\n", v...))
 }
 
 // Convenience function, will not terminate the program
-func (this *Logger) Fatal(format string, v ...interface{}) {
-	this.Log(Levels.Fatal, fmt.Sprintf(format+"\n", v...))
+func (this *Logger) Critical(v ...interface{}) {
+	this.Log(Levels.Critical, fmt.Sprintln(v...))
+}
+
+// Convenience function, will not terminate the program
+func (this *Logger) Criticalf(format string, v ...interface{}) {
+	this.Log(Levels.Critical, fmt.Sprintf(format+"\n", v...))
+}
+
+// Convenience function, will terminate the program
+func (this *Logger) Fatal(v ...interface{}) {
+	this.Log(Levels.Critical, fmt.Sprintln(v...))
+	os.Exit(1)
+}
+
+// Convenience function, will terminate the program
+func (this *Logger) Fatalf(format string, v ...interface{}) {
+	this.Log(Levels.Critical, fmt.Sprintf(format+"\n", v...))
+	os.Exit(1)
 }
 
 // Convinience function to support io.Writer interface
