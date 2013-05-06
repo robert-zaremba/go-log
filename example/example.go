@@ -15,6 +15,7 @@ func main() {
 	Log.Debug("This won't be printed")
 
 	Log = log.NewStd(os.Stderr, log.Levels.Debug, log.Ldate|log.Lmicroseconds, true)
+	Log.Log(15, "raw message\n")
 	Log.Debug("some message")
 	Log.Info("some message")
 	Log.Warning("some message")
