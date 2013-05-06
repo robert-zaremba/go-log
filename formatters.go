@@ -48,8 +48,6 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 	}
 	out = append(out, slevel)
 
-	out = append(out, this.Prefix)
-
 	// adding caller info. It's quiet exepnsive
 	if this.Flag&(Lshortfile|Llongfile) != 0 {
 		if _, file, line, ok := runtime.Caller(2); ok { // 2: calldepth
@@ -62,6 +60,7 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 		}
 	}
 
+	out = append(out, this.Prefix)
 	out = append(out, msg)
 	return []byte(strings.Join(out, " "))
 }
