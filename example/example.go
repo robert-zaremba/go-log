@@ -15,7 +15,7 @@ func main() {
 	Log.Infof("x is %f and is positive: %v", x, x > 0)
 	Log.Debug("This won't be printed")
 
-	Log = log.NewStd(os.Stderr, log.Levels.Debug, log.Ldate|log.Lmicroseconds, true)
+	Log = log.NewStd(os.Stderr, log.Levels.Debug, log.Ldate|log.Lmicroseconds|log.Lshortfile, true)
 	Log.Log(15, "raw message\n")
 	Log.Debug("some message")
 	Log.Info("some message")
