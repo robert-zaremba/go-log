@@ -78,3 +78,9 @@ func (this TimeFormatter) Format(level Level, msg string) []byte {
 	out = append(out, msg)
 	return []byte(strings.Join(out, " "))
 }
+
+type SimpleFormatter struct{}
+
+func (this SimpleFormatter) Format(level Level, msg string) []byte {
+	return []byte(msg)
+}
