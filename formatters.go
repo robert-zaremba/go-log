@@ -50,7 +50,7 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 
 	// adding caller info. It's quiet exepnsive
 	if this.Flag&(Lshortfile|Llongfile) != 0 {
-		if _, file, line, ok := runtime.Caller(2); ok { // 2: calldepth
+		if _, file, line, ok := runtime.Caller(4); ok { // calldepth, 4 functions back
 			if this.Flag&Lshortfile != 0 {
 				file = file[strings.LastIndex(file, "/")+1:]
 			}
