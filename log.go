@@ -30,6 +30,9 @@ const (
 	LstdFlags     = Ldate | Ltime // initial values for the standard logger
 )
 
+// Map of mutexes which will protect Writeres for simultaneous write
+var writerMutexMap = make(map[io.Writer]*sync.Mutex)
+
 // Represents how critical the logged
 // message is.
 type Level uint8
@@ -84,11 +87,10 @@ type handler struct {
 }
 
 type Logger struct {
+	// Mutex to protect simultaneous appends to handlers
 	mtx      sync.Mutex
 	handlers []handler
 }
-
-var vv map[io.Writer]sync.Mutex
 
 // Instantiate a new Logger
 func New() *Logger {
@@ -106,12 +108,16 @@ func NewStd(w io.Writer, level Level, flag int, colored bool) *Logger {
  * ------
  */
 
-// Adds a handler, specifying the maximum log Level
-// you want to be written to this output. For instance,
-// if you pass Warning for level, all logs of type
+// Adds a handler, specifying the maximum log Level you want to be written to this output.
+// For instance, if you pass Warning for level, all logs of type
 // Warning, Error, and Critical would be logged to this handler.
+// This method is thread safe. You can use it in multiple goroutines.
+// You can also use the same writer in multiple Loggers.
 func (this *Logger) AddHandler(writer io.Writer, level Level, fm Formatter) {
 	this.mtx.Lock()
+	if _, ok := writerMutexMap[writer]; !ok {
+		writerMutexMap[writer] = &sync.Mutex{}
+	}
 	this.handlers = append(this.handlers, handler{writer, level, fm})
 	this.mtx.Unlock()
 }
@@ -123,9 +129,10 @@ func (this *Logger) Log(level Level, msg string) {
 	for _, h := range this.handlers {
 		if h.level <= level {
 			out = h.fmt.Format(level, msg)
-			this.mtx.Lock()
+			mtx, _ := writerMutexMap[h.writer]
+			mtx.Lock()
 			h.writer.Write(out)
-			this.mtx.Unlock()
+			mtx.Unlock()
 		}
 	}
 }
