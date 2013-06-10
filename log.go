@@ -185,6 +185,16 @@ func (this *Logger) Warningf(format string, v ...interface{}) {
 	this.Log(Levels.Warning, fmt.Sprintf(format+"\n", v...))
 }
 
+// Convenience function, short version of Warning
+func (this *Logger) Warn(v ...interface{}) {
+	this.Log(Levels.Warning, fmt.Sprintln(v...))
+}
+
+// Convenience function, short version of Warningf
+func (this *Logger) Warnf(format string, v ...interface{}) {
+	this.Log(Levels.Warning, fmt.Sprintf(format+"\n", v...))
+}
+
 // Convenience function
 func (this *Logger) Error(v ...interface{}) {
 	this.Log(Levels.Error, fmt.Sprintln(v...))
