@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -73,7 +74,7 @@ func String2Level(level string) (Level, error) {
 		return Levels.Debug, errors.New("level is empty")
 	}
 	for li, ls := range levelStrings {
-		if ls == level {
+		if strings.HasPrefix(ls, level) {
 			return li, nil
 		}
 	}
