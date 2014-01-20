@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/scale-it/go-log"
 	"os"
 )
 
-var Log = log.New()
+var Log = log.New(spew.Sprintln, spew.Sprintf)
 
 func main() {
 	Log.AddHandler(os.Stderr, log.Levels.Info, log.StdFormatter{"[root]", log.Lshortfile, false})

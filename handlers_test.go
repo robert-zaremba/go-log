@@ -1,6 +1,7 @@
 package log_test
 
 import (
+	"fmt"
 	"github.com/scale-it/go-log"
 	"io/ioutil"
 	"os"
@@ -15,7 +16,7 @@ var formatter = log.SimpleFormatter{}
 var fn = "rotedfile.tmp"
 
 func TestRotFileNoRot(t *testing.T) {
-	var l *log.Logger = log.New()
+	var l *log.Logger = log.New(fmt.Sprint, fmt.Sprintf)
 	var err error
 	rotfile, err := log.NewRotFile(fn, true, 5, 0)
 	defer os.Remove(fn)
@@ -31,7 +32,7 @@ func TestRotFileNoRot(t *testing.T) {
 }
 
 func TestRotFileRotations(t *testing.T) {
-	var l *log.Logger = log.New()
+	var l *log.Logger = log.New(fmt.Sprint, fmt.Sprintf)
 	rotfile, _ := log.NewRotFile(fn, true, 5, 2)
 	defer os.Remove(fn)
 	defer os.Remove(fn + ".1")
@@ -47,7 +48,7 @@ func TestRotFileRotations(t *testing.T) {
 }
 
 func LogALot(ch chan bool, rotfile *log.RotFile, s string) {
-	var l *log.Logger = log.New()
+	var l *log.Logger = log.New(fmt.Sprint, fmt.Sprintf)
 	l.AddHandler(rotfile, log.Levels.Debug, formatter)
 	for i := 1; i <= 2000; i++ {
 		l.Log(log.Levels.Debug, s)
