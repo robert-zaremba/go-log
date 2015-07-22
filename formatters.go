@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -66,7 +67,7 @@ func (this StdFormatter) Format(level Level, msg string) []byte {
 	if this.Flag&(Lshortfile|Llongfile) != 0 {
 		if _, file, line, ok := runtime.Caller(4); ok { // calldepth, 4 functions back
 			if this.Flag&Lshortfile != 0 {
-				file = file[strings.LastIndex(file, "/")+1:]
+				file = shortFilename(file)
 			}
 			out = append(out, fmt.Sprintf("%s:%d", file, line))
 		} else {
@@ -97,4 +98,18 @@ type SimpleFormatter struct{}
 
 func (this SimpleFormatter) Format(level Level, msg string) []byte {
 	return []byte(msg)
+}
+
+// returns 'basename(dirname(filename)'/basename(filename)
+func shortFilename(filename string) string {
+	var prev, last = -1, -1
+	for i := 0; i < len(filename); i++ {
+		if os.IsPathSeparator(filename[i]) {
+			prev, last = last, i
+		}
+	}
+	if last < 0 {
+		return filename
+	}
+	return filename[prev+1:]
 }
