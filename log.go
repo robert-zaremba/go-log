@@ -230,7 +230,7 @@ func (this *Logger) Critical(v ...interface{}) {
 
 // Convenience function, will not terminate the program
 func (this *Logger) Criticalf(format string, v ...interface{}) {
-	this.Logf(Levels.Critical, format, v)
+	this.Logf(Levels.Critical, format, v...)
 }
 
 // Convenience function, will terminate the program
